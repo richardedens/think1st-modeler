@@ -121,13 +121,17 @@ class BrowserFrame(tk.Frame):
         """For focus problems see Issue #255 and Issue #535. """
         self.focus_set()
 
-    def on_save_project(self):
+    def on_save_project(self, js_callback=None):
         self.dbFileName = filedialog.asksaveasfilename(initialdir = "/",title = "Select file",filetypes = (("think1st app files","*.app"),("all files","*.*")))
         self.dbconn = sqlite3.connect(self.dbFileName + str(".app"))
+        if js_callback:
+            js_callback.Call('')
 
-    def on_open_project(self):
+    def on_open_project(self, js_callback=None):
         self.dbFileName = filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("think1st app files","*.app"),("all files","*.*")))
         self.dbconn = sqlite3.connect(self.dbFileName)
+        if js_callback:
+            js_callback.Call('')
 
     def embed_browser(self):
         window_info = cef.WindowInfo()
@@ -136,9 +140,24 @@ class BrowserFrame(tk.Frame):
         self.browser = cef.CreateBrowserSync(window_info,
                                              url="http://localhost:8080/")
         assert self.browser
+        # Handlers
         self.browser.SetClientHandler(LoadHandler(self))
         self.browser.SetClientHandler(FocusHandler(self))
+        self.browser.SetClientHandler(DisplayHandler(self))
+        # JavaScript Bindings
+        self.bindings = cef.JavascriptBindings(bindToFrames=False, bindToPopups=False)
+        self.bindings.SetProperty("python_property", "This property was set in Python")
+        self.bindings.SetProperty("cefpython_version", cef.GetVersion())
+        self.bindings.SetFunction("pyOpenFileDialog", self.on_open_project)
+        self.bindings.SetFunction("pySaveAsFileDialog", self.on_save_project)
+        self.browser.SetJavascriptBindings(self.bindings)
+        # Message loop
         self.message_loop_work()
+
+    def js_exec(self, js_callback=None):
+        if js_callback:
+            js_callback.Call('')
+
 
     def get_window_handle(self):
         if self.winfo_id() > 0:
@@ -205,6 +224,15 @@ class BrowserFrame(tk.Frame):
         # code. All references must be cleared for CEF to shutdown cleanly.
         self.browser = None
 
+class DisplayHandler(object):
+    def __init__(self, browser_frame):
+        self.browser_frame = browser_frame
+
+    def OnConsoleMessage(self, browser, message, **_):
+        """Called to display a console message."""
+        # This will intercept js errors, see comments in OnAfterCreated
+        if "error" in message.lower() or "uncaught" in message.lower():
+           logging.info(str(message.lower()) + ": " + str(message.msg) + str(message.stack_info))
 
 class LoadHandler(object):
 
