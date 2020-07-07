@@ -1,70 +1,71 @@
-from flask import Flask, render_template, jsonify, Response, Markup
-from flask_restful import reqparse, abort, Api, Resource
-from requests.auth import HTTPBasicAuth
-import requests
-import json 
+#  
+#   ---------------------------------------------------------------------------------------
+#     _     _       _           _      _         _   
+#    | |_  | |__   (_)  _ __   | | __ / |  ___  | |_ 
+#    | __| | '_ \  | | | '_ \  | |/ / | | / __| | __|
+#    | |_  | | | | | | | | | | |   <  | | \__ \ | |_ 
+#     \__| |_| |_| |_| |_| |_| |_|\_\ |_| |___/  \__|
+#                                     my@think1st.app
+#
+#   ---------------------------------------------------------------------------------------
+#   Author:         Gerhard Richard Edens
+#   Publisher:      Think1st
+#   Date:           07/07/2020 
+#   Description: 
+#   
+#   This is the startup main python script that will run the modeler and the internal webserver.
+#   ---------------------------------------------------------------------------------------
+#
 
-# Init flask
-app = Flask(__name__,
-static_url_path="",
-static_folder="public",
-template_folder="views",
-root_path="")
+# External libraries.
+from runtime import colorer
+from waitress import serve
+from t1webserver import t1webserver
+from t1modeler import t1modeler
 
-@app.route("/")
-def homepage():
-    return render_template("homepage.html")
+# Installed packages.
+import time
+import threading
+import logging
+import sys
 
-@app.route("/dashboard")
-def dashboard():
-    return render_template("dashboard.html")
+# Setup loging
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stdout,
+    format='%(message)s',
+)
 
-@app.route("/kanbanboard")
-def kanbanboard():
-    return render_template("kanbanboard.html")
-    
-@app.route("/project-create")
-def project_create():
-    return render_template("project-create.html")
-    
-@app.route("/project-detail")
-def project_detail():
-    return render_template("project-detail.html")
-    
-@app.route("/project-edit")
-def project_edit():
-    return render_template("project-edit.html")
+# Create a welcome header.
+def get_welcome_header():
+    welcome_ascii_header = '''
+     _     _       _           _      _         _   
+    | |_  | |__   (_)  _ __   | | __ / |  ___  | |_ 
+    | __| | '_ \  | | | '_ \  | |/ / | | / __| | __|
+    | |_  | | | | | | | | | | |   <  | | \__ \ | |_ 
+     \__| |_| |_| |_| |_| |_| |_|\_\ |_| |___/  \__|
+                                     my@think1st.app
+    '''
+    return welcome_ascii_header
 
-@app.route("/signin")
-def signin():
-    return render_template("signin.html")
+# Define the base server
+def server():
+    serve(t1webserver)
+# Define the base server
+def modeler():
+    t1modeler()
 
-@app.route("/signup")
-def signup():
-    return render_template("signup.html")
+if __name__ == "__main__":
+    logging.warning(get_welcome_header())
 
-@app.route("/translation")
-def feminenza():
-    r = requests.get("https://www.feminenza.org/wp-json/wp/v2/pages", auth=HTTPBasicAuth("gedens", "1Feminenza#1234th"))
-    return Response(r.content.decode("utf-8"), mimetype="text/json")
+    # Start the internal webserver.
+    webServer = threading.Thread(target=server)
+    webServer.start()
 
-@app.route("/feminenza-welcome")
-def feminenza_welcome():
-    r = requests.get("https://www.feminenza.org/wp-json/wp/v2/pages?slug=welcome&lang=en", auth=HTTPBasicAuth("gedens", "1Feminenza#1234th"))
-    v = json.loads(r.text)
-    v[0]["content"]["rendered"] = Markup(v[0]["content"]["rendered"])
-    return render_template("feminenza.html", data=v)
+    # Start the main window.
+    mainWindow = threading.Thread(target=modeler)
+    mainWindow.start()
 
-@app.route("/feminenza-welcome-nl")
-def feminenza_welcome_nl():
-    r = requests.get("https://www.feminenza.org/wp-json/wp/v2/pages?slug=welkom&lang=nl", auth=HTTPBasicAuth("gedens", "1Feminenza#1234th"))
-    v = json.loads(r.text)
-    v[0]["content"]["rendered"] = Markup(v[0]["content"]["rendered"])
-    return render_template("feminenza.html", data=v)
-
-@app.route("/feminenza-welcome-fr")
-def feminenza_welcome_fr():
-    r = requests.get("https://www.feminenza.org/wp-json/wp/v2/pages?slug=bienvenue&lang=fr", auth=HTTPBasicAuth("gedens", "1Feminenza#1234th"))
-    v = json.loads(r.text)
-    v[0]["content"]["rendered"] = Markup(v[0]["content"]["rendered"])
-    return render_template("feminenza.html", data=v)
+    # Join threads.
+    webServer.join()
+    mainWindow.join()

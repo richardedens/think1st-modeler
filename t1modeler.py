@@ -1,7 +1,27 @@
+#  
+#   ---------------------------------------------------------------------------------------
+#     _     _       _           _      _         _   
+#    | |_  | |__   (_)  _ __   | | __ / |  ___  | |_ 
+#    | __| | '_ \  | | | '_ \  | |/ / | | / __| | __|
+#    | |_  | | | | | | | | | | |   <  | | \__ \ | |_ 
+#     \__| |_| |_| |_| |_| |_| |_|\_\ |_| |___/  \__|
+#                                     my@think1st.app
+#
+#   ---------------------------------------------------------------------------------------
+#   Author:         Gerhard Richard Edens
+#   Publisher:      Think1st
+#   Date:           07/07/2020 
+#   Description: 
+#   
+#   This is the main CEFPython / Tcl - Tk enabled webbrowser.
+#   In this browser we will load the internal server that is running on port 8080.
+#   ---------------------------------------------------------------------------------------
+#
+
 from cefpython3 import cefpython as cef
-import ctypes
 from tkinter import filedialog
 from tkinter import *
+import ctypes
 import tkinter as tk
 import sys
 import os
@@ -22,7 +42,7 @@ MAC = (platform.system() == "Darwin")
 IMAGE_EXT = ".png" if tk.TkVersion > 8.5 else ".gif"
 
 
-def main():
+def t1modeler():
     logging.info("[GUI] - CEF Python {ver}".format(ver=cef.__version__))
     logging.info("[GUI] - Python {ver} {arch}".format(
             ver=platform.python_version(), arch=platform.architecture()[0]))
@@ -111,6 +131,9 @@ class MainFrame(tk.Frame):
 
 class BrowserFrame(tk.Frame):
 
+    #   ---------------------------------------------------------------------------------------
+    #   Initialization
+    #   ---------------------------------------------------------------------------------------
     def __init__(self, master):
         self.closing = False
         self.browser = None
@@ -121,36 +144,47 @@ class BrowserFrame(tk.Frame):
         """For focus problems see Issue #255 and Issue #535. """
         self.focus_set()
 
-    def on_save_project(self, js_callback=None):
+    #   ---------------------------------------------------------------------------------------
+    #   JavaScript bindings.
+    #   ---------------------------------------------------------------------------------------
+
+    # Save a project
+    def js_on_save_project(self, js_callback=None):
         self.dbFileName = filedialog.asksaveasfilename(initialdir = "/",title = "Select file",filetypes = (("think1st app files","*.app"),("all files","*.*")))
         self.dbconn = sqlite3.connect(self.dbFileName + str(".app"))
         if js_callback:
             js_callback.Call('')
 
-    def on_open_project(self, js_callback=None):
+    # Open a project
+    def js_on_open_project(self, js_callback=None):
         self.dbFileName = filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("think1st app files","*.app"),("all files","*.*")))
         self.dbconn = sqlite3.connect(self.dbFileName)
         if js_callback:
             js_callback.Call('')
 
     def embed_browser(self):
+        # Set window size.
         window_info = cef.WindowInfo()
         rect = [0, 0, self.winfo_width(), self.winfo_height()]
         window_info.SetAsChild(self.get_window_handle(), rect)
-        self.browser = cef.CreateBrowserSync(window_info,
-                                             url="http://localhost:8080/")
+
+        # Running internal webserver.
+        self.browser = cef.CreateBrowserSync(window_info, url="http://localhost:8080/")
         assert self.browser
+
         # Handlers
         self.browser.SetClientHandler(LoadHandler(self))
         self.browser.SetClientHandler(FocusHandler(self))
         self.browser.SetClientHandler(DisplayHandler(self))
+
         # JavaScript Bindings
         self.bindings = cef.JavascriptBindings(bindToFrames=False, bindToPopups=False)
         self.bindings.SetProperty("python_property", "This property was set in Python")
         self.bindings.SetProperty("cefpython_version", cef.GetVersion())
-        self.bindings.SetFunction("pyOpenFileDialog", self.on_open_project)
-        self.bindings.SetFunction("pySaveAsFileDialog", self.on_save_project)
+        self.bindings.SetFunction("pyOpenFileDialog", self.js_on_open_project)
+        self.bindings.SetFunction("pySaveAsFileDialog", self.js_on_save_project)
         self.browser.SetJavascriptBindings(self.bindings)
+
         # Message loop
         self.message_loop_work()
 

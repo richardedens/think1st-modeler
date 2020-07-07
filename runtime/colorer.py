@@ -1,4 +1,22 @@
-#!/usr/bin/env python
+#  
+#   ---------------------------------------------------------------------------------------
+#     _     _       _           _      _         _   
+#    | |_  | |__   (_)  _ __   | | __ / |  ___  | |_ 
+#    | __| | '_ \  | | | '_ \  | |/ / | | / __| | __|
+#    | |_  | | | | | | | | | | |   <  | | \__ \ | |_ 
+#     \__| |_| |_| |_| |_| |_| |_|\_\ |_| |___/  \__|
+#                                     my@think1st.app
+#
+#   ---------------------------------------------------------------------------------------
+#   Author:         Gerhard Richard Edens
+#   Publisher:      Think1st
+#   Date:           07/07/2020 
+#   Description: 
+#   
+#   This python script will color the output of the logging.
+#   ---------------------------------------------------------------------------------------
+#
+
 # encoding: utf-8
 import logging
 # now we patch Python code to add color support to logging.StreamHandler
