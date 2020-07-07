@@ -1,13 +1,13 @@
 from cefpython3 import cefpython as cef
 import ctypes
-try:
-    import tkinter as tk
-except ImportError:
-    import Tkinter as tk
+from tkinter import filedialog
+from tkinter import *
+import tkinter as tk
 import sys
 import os
 import platform
 import logging
+import sqlite3
 
 # Fix for PyCharm hints warnings
 WindowUtils = cef.WindowUtils()
@@ -120,6 +120,14 @@ class BrowserFrame(tk.Frame):
         self.bind("<Configure>", self.on_configure)
         """For focus problems see Issue #255 and Issue #535. """
         self.focus_set()
+
+    def on_save_project(self):
+        self.dbFileName = filedialog.asksaveasfilename(initialdir = "/",title = "Select file",filetypes = (("think1st app files","*.app"),("all files","*.*")))
+        self.dbconn = sqlite3.connect(self.dbFileName + str(".app"))
+
+    def on_open_project(self):
+        self.dbFileName = filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("think1st app files","*.app"),("all files","*.*")))
+        self.dbconn = sqlite3.connect(self.dbFileName)
 
     def embed_browser(self):
         window_info = cef.WindowInfo()
