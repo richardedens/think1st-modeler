@@ -1,0 +1,1 @@
+pip install waitress flask flask_restful cefpython3 requests pylint
