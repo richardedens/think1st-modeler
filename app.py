@@ -51,10 +51,12 @@ def get_welcome_header():
 # Define the base server
 def server():
     serve(t1webserver)
+
 # Define the base server
 def modeler():
     t1modeler()
 
+# This is treated as the main python script and does has the following inside it.
 if __name__ == "__main__":
     logging.warning(get_welcome_header())
 
